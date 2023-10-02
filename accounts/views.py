@@ -1,8 +1,18 @@
-from rest_framework.generics import RetrieveAPIView, UpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import RetrieveAPIView, UpdateAPIView, CreateAPIView
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.permissions import UserIsOwnerOrReadOnly
-from accounts.serializers import UserSerializer
+from accounts.serializers import UserSerializer, CustomTokenObtainPairSerializer
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class UserRegisterAPIView(CreateAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = UserSerializer
 
 
 class UserInfoAPIView(RetrieveAPIView):
