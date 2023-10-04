@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from minifier.minificator.enums import MimeType
+from file_manager.minifier.enums import MimeType
 
 
 class MinifierResponseObject(object):
@@ -12,7 +12,7 @@ class MinifierResponseObject(object):
     def to_json(self) -> dict:
         """
             Returns:
-                 serialized minifier response
+                 serialized file_manager response
         """
         return {
             "success": self.success,

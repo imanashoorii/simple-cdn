@@ -1,10 +1,10 @@
 from typing import *
 
 from core.exceptions import WrongMinifierProviderException
-from minifier.minificator.base import BaseMinifierProviderClass
-from minifier.minificator.css_minifier import CSSMinifier
-from minifier.minificator.enums import MinifierEnum
-from minifier.minificator.terser import TerserMinifier
+from file_manager.minifier.base import BaseMinifierProviderClass
+from file_manager.minifier.css_minifier import CSSMinifier
+from file_manager.minifier.enums import MinifierEnum
+from file_manager.minifier.jsmin import JsminMinifier
 
 
 class MinifierProviderFactory:
@@ -12,8 +12,8 @@ class MinifierProviderFactory:
                                                                     WrongMinifierProviderException]:
 
         minifier_mappings = {
-            MinifierEnum.CSS: CSSMinifier,
-            MinifierEnum.TERSER: TerserMinifier
+            MinifierEnum.CSS_HTML_JS: CSSMinifier,
+            MinifierEnum.JSMIN: JsminMinifier
         }
 
         if minifier in minifier_mappings:
@@ -26,9 +26,9 @@ class MinifierProviderFactory:
     def get_all_provider_keys(cls) -> List:
         """
             Returns:
-                a list of all minifier enum available
+                a list of all file_manager enum available
         """
         return [
-            MinifierEnum.CSS,
-            MinifierEnum.TERSER
+            MinifierEnum.CSS_HTML_JS,
+            MinifierEnum.JSMIN
         ]

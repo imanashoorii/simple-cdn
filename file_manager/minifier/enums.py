@@ -1,6 +1,6 @@
 class MinifierEnum:
-    CSS = 1
-    TERSER = 2
+    CSS_HTML_JS = 1
+    JSMIN = 2
 
 
 class MimeType:
