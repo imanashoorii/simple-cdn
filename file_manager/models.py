@@ -23,6 +23,7 @@ class MinificationLog(models.Model):
 class FileManager(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     file = models.FileField(upload_to='uploads/')
+    minified_file = models.FileField(upload_to='uploads/', null=True, blank=True)
     require_minify = models.BooleanField(default=False)
     metadata = models.OneToOneField(FileContent, on_delete=models.CASCADE)
     minification_log = models.OneToOneField(MinificationLog, null=True, blank=True, on_delete=models.CASCADE)

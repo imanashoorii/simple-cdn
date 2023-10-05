@@ -41,15 +41,16 @@ class FileManagerSerializer(serializers.ModelSerializer):
         validated_data['metadata'] = file_content
         validated_data['user'] = self.context.get('request').user
 
-        # if validated_data.get('require_minify'):
-        #     if file_content.file_type not in ['css', 'js']:
-        #         minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
-        #         uploaded_file_content = uploaded_file.read().decode('utf-8')
-        #         status, result = minifier_class.minify(
-        #             file_type=file_content.file_type,
-        #             input_file=uploaded_file_content,
-        #             output_file=target_file_path
-        #         )
+        if validated_data.get('require_minify'):
+            validated_data.pop('file')
+            minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
+            # uploaded_file_content = uploaded_file.read().decode('utf-8')
+            result = minifier_class.minify(
+                input_file=uploaded_file,
+            )
+            if result:
+                validated_data['minified_file'] = uploaded_file
+            raise serializers.ValidationError('ERROR IN FILE MINIFICATION')
 
         file_manager = FileManager.objects.create(**validated_data)
 
