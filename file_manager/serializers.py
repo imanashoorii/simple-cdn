@@ -1,3 +1,5 @@
+import traceback
+
 from rest_framework import serializers
 
 from file_manager.minifier.enums import MinifierEnum
@@ -28,7 +30,7 @@ class FileManagerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FileManager
-        fields = ['id', 'user', 'file', 'metadata', 'require_minify', 'minification_log']
+        fields = ['id', 'user', 'file', 'minified_file', 'metadata', 'require_minify', 'minification_log']
 
     def create(self, validated_data):
         uploaded_file = validated_data.get('file')
@@ -43,15 +45,18 @@ class FileManagerSerializer(serializers.ModelSerializer):
 
         if validated_data.get('require_minify'):
             validated_data.pop('file')
+
             minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
-            # uploaded_file_content = uploaded_file.read().decode('utf-8')
-            result = minifier_class.minify(
-                input_file=uploaded_file,
+
+            status, result = minifier_class.minify_html(
+                file_name=uploaded_file.name,
+                file_content=uploaded_file.read().decode('utf-8'),
             )
-            if result:
-                validated_data['minified_file'] = uploaded_file
-            raise serializers.ValidationError('ERROR IN FILE MINIFICATION')
+
+            if status:
+                validated_data['minified_file'] = result
+            else:
+                raise serializers.ValidationError({"status": status, "result": result})
 
         file_manager = FileManager.objects.create(**validated_data)
-
         return file_manager
