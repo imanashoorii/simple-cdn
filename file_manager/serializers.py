@@ -30,22 +30,20 @@ class FileManagerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FileManager
-        fields = ['id', 'user', 'file', 'minified_file', 'metadata', 'require_minify', 'minification_log']
+        fields = ['id', 'user', 'file', 'metadata', 'require_minify', 'minification_log']
 
     def create(self, validated_data):
-        uploaded_file = validated_data.get('file')
+        uploaded_file = validated_data.pop('file')
+
         file_content = FileContent.objects.create(
             name=uploaded_file.name,
             size=uploaded_file.size,
             file_type=uploaded_file.name.split('.')[-1],
         )
 
-        validated_data['metadata'] = file_content
-        validated_data['user'] = self.context.get('request').user
+        user = self.context['request'].user
 
         if validated_data.get('require_minify'):
-            validated_data.pop('file')
-
             minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
 
             status, result = minifier_class.minify_html(
@@ -53,10 +51,18 @@ class FileManagerSerializer(serializers.ModelSerializer):
                 file_content=uploaded_file.read().decode('utf-8'),
             )
 
-            if status:
-                validated_data['minified_file'] = result
-            else:
+            if not status:
                 raise serializers.ValidationError({"status": status, "result": result})
 
-        file_manager = FileManager.objects.create(**validated_data)
+            validated_data['file'] = result
+
+        else:
+            validated_data['file'] = uploaded_file
+
+        file_manager = FileManager.objects.create(
+            metadata=file_content,
+            user=user,
+            **validated_data,
+        )
+
         return file_manager
