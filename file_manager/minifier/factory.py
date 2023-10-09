@@ -13,7 +13,7 @@ class MinifierProviderFactory:
 
         minifier_mappings = {
             MinifierEnum.CSS_HTML_JS: CSSMinifier,
-            MinifierEnum.JSMIN: JsminMinifier
+            MinifierEnum.JSMIN: JsminMinifier  # TODO: IMPLEMENT JSMIN CLASS
         }
 
         if minifier in minifier_mappings:

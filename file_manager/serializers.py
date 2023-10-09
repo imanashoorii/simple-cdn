@@ -44,6 +44,8 @@ class FileManagerSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         if validated_data.get('require_minify'):
+            # TODO: HANDLE JS & CSS files
+            # TODO: HANDLE FILE TYPE VALIDATION (ONLY HTML, CSS, JS FILES ARE ALLOWED)
             minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
 
             status, result = minifier_class.minify_html(
