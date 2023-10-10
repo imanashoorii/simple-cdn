@@ -18,5 +18,6 @@ def get_file_type(file):
         raise WrongMimeTypeException("Wrong file type")
 
 
-
-
+def acceptableMinificationFileTypes():
+    acceptable_files = ['css', 'html', 'scss', 'sass', 'js']
+    return acceptable_files

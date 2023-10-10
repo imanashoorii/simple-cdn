@@ -1,10 +1,10 @@
-import traceback
-
 from rest_framework import serializers
 
+from file_manager.constants import ErrorMessages
 from file_manager.minifier.enums import MinifierEnum
 from file_manager.minifier.factory import MinifierProviderFactory
 from file_manager.models import FileContent, MinificationLog, FileManager
+from file_manager.utils import acceptableMinificationFileTypes
 
 
 class FileContentSerializer(serializers.ModelSerializer):
@@ -14,7 +14,6 @@ class FileContentSerializer(serializers.ModelSerializer):
 
     def save(self):
         name = self.context.get('file').name
-        print(name)
 
 
 class MinificationLogSerializer(serializers.ModelSerializer):
@@ -44,8 +43,12 @@ class FileManagerSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         if validated_data.get('require_minify'):
+            acceptable_files = acceptableMinificationFileTypes()
+            if file_content.file_type not in acceptable_files:
+                raise serializers.ValidationError({
+                    "error": ErrorMessages.FILE_NOT_ALLOWED
+                })
             # TODO: HANDLE JS & CSS files
-            # TODO: HANDLE FILE TYPE VALIDATION (ONLY HTML, CSS, JS FILES ARE ALLOWED)
             minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
 
             status, result = minifier_class.minify_html(
@@ -54,7 +57,7 @@ class FileManagerSerializer(serializers.ModelSerializer):
             )
 
             if not status:
-                raise serializers.ValidationError({"status": status, "result": result})
+                raise serializers.ValidationError({"error": result})
 
             validated_data['file'] = result
 
