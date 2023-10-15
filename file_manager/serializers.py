@@ -29,11 +29,10 @@ class FileManagerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FileManager
-        fields = ['id', 'user', 'file', 'metadata', 'require_minify', 'minification_log']
+        fields = ['id', 'user', 'file', 'metadata', 'minify', 'minification_log']
 
     def create(self, validated_data):
         uploaded_file = validated_data.pop('file')
-
         file_content = FileContent.objects.create(
             name=uploaded_file.name,
             size=uploaded_file.size,
@@ -41,33 +40,31 @@ class FileManagerSerializer(serializers.ModelSerializer):
         )
 
         user = self.context['request'].user
+        minify = validated_data.get('minify', False)
+        acceptable_files = acceptableMinificationFileTypes()
 
-        if validated_data.get('require_minify'):
-            acceptable_files = acceptableMinificationFileTypes()
-            if file_content.file_type not in acceptable_files:
-                raise serializers.ValidationError({
-                    "error": ErrorMessages.FILE_NOT_ALLOWED
-                })
-            # TODO: HANDLE JS & CSS files
-            minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
+        if minify and file_content.file_type not in acceptable_files:
+            raise serializers.ValidationError({"error": ErrorMessages.FILE_NOT_ALLOWED})
 
-            status, result = minifier_class.minify_html(
-                file_name=uploaded_file.name,
-                file_content=uploaded_file.read().decode('utf-8'),
-            )
+        try:
+            file_content_text = uploaded_file.read().decode('utf-8')
+            if minify:
+                minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
+                if file_content.file_type == 'html':
+                    status, result = minifier_class.minify_html(file_name=uploaded_file.name, file_content=file_content_text)
+                elif file_content.file_type == 'css':
+                    status, result = minifier_class.minify_css(file_name=uploaded_file.name, file_content=file_content_text)
+                else:
+                    status, result = minifier_class.minify_js(file_name=uploaded_file.name, file_content=file_content_text)
 
-            if not status:
-                raise serializers.ValidationError({"error": result})
+                if not status:
+                    raise serializers.ValidationError({"error": "Minification failed"})
+                validated_data['file'] = result
+            else:
+                validated_data['file'] = uploaded_file
 
-            validated_data['file'] = result
+            file_manager = FileManager.objects.create(metadata=file_content, user=user, **validated_data)
+            return file_manager
 
-        else:
-            validated_data['file'] = uploaded_file
-
-        file_manager = FileManager.objects.create(
-            metadata=file_content,
-            user=user,
-            **validated_data,
-        )
-
-        return file_manager
+        except Exception as e:
+            raise serializers.ValidationError({"error": e})

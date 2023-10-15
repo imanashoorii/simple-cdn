@@ -4,25 +4,6 @@ from io import BytesIO
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from file_manager.minifier.enums import MimeType
-
-
-class MinificationResponseObject(object):
-
-    def __init__(self, success: bool, path: str):
-        self.success = success
-        self.path = path
-
-    def to_json(self) -> dict:
-        """
-            Returns:
-                 serialized file_manager_minification response
-        """
-        return {
-            "success": self.success,
-            "path": self.path,
-        }
-
 
 class BaseMinifierProviderClass(ABC):
 
@@ -46,13 +27,13 @@ class BaseMinifierProviderClass(ABC):
         return new_uploaded_file
 
     @abstractmethod
-    def minify_html(self, file_name: str = None, file_content: str = None) -> MinificationResponseObject:
+    def minify_html(self, file_name: str = None, file_content: str = None):
         raise NotImplementedError
 
     @abstractmethod
-    def minify_css(self, input_file: str = None, output_file: str = None) -> MinificationResponseObject:
+    def minify_css(self, file_name: str = None, file_content: str = None):
         raise NotImplementedError
 
     @abstractmethod
-    def minify_js(self, input_file: str = None, output_file: str = None) -> MinificationResponseObject:
+    def minify_js(self, file_name: str = None, file_content: str = None):
         raise NotImplementedError

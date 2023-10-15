@@ -1,14 +1,7 @@
-import logging
-import traceback
-import os
-from typing import *
-
-from css_html_js_minify import process_single_html_file, process_single_js_file, process_single_css_file
+from css_html_js_minify import css_minify, js_minify
 from css_html_js_minify.html_minifier import html_minify
 
-from core.exceptions import WrongMimeTypeException
-from file_manager.minifier.base import BaseMinifierProviderClass, MinificationResponseObject
-from file_manager.minifier.enums import MimeType
+from file_manager.minifier.base import BaseMinifierProviderClass
 
 
 class CSSMinifier(BaseMinifierProviderClass):
@@ -20,15 +13,31 @@ class CSSMinifier(BaseMinifierProviderClass):
         try:
             minified_html = html_minify(file_content)
         except Exception as e:
-            return False, "ERROR IN MINIFYING FILE!"
+            return False, "ERROR IN MINIFYING HTML FILE!"
         try:
             output_file = self.createInMemoryUploadFile(file_name=file_name, file_content=minified_html)
             return True, output_file
         except Exception as e:
-            return False, "ERROR IN CREATING MINIFIED FILE!"
+            return False, "ERROR IN CREATING MINIFIED HTML FILE!"
 
-    def minify_css(self, input_file: str = None, output_file: str = None) -> MinificationResponseObject:
-        raise NotImplementedError()
+    def minify_css(self, file_name: str = None, file_content: str = None):
+        try:
+            minified_css = css_minify(file_content)
+        except Exception as e:
+            return False, "ERROR IN MINIFYING CSS FILE!"
+        try:
+            output_file = self.createInMemoryUploadFile(file_name=file_name, file_content=minified_css)
+            return True, output_file
+        except Exception as e:
+            return False, "ERROR IN CREATING MINIFIED CSS FILE!"
 
-    def minify_js(self, input_file: str = None, output_file: str = None) -> MinificationResponseObject:
-        raise NotImplementedError()
+    def minify_js(self, file_name: str = None, file_content: str = None):
+        try:
+            minified_css = js_minify(file_content)
+        except Exception as e:
+            return False, "ERROR IN MINIFYING JS FILE!"
+        try:
+            output_file = self.createInMemoryUploadFile(file_name=file_name, file_content=minified_css)
+            return True, output_file
+        except Exception as e:
+            return False, "ERROR IN CREATING MINIFIED JS FILE!"

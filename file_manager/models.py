@@ -31,7 +31,7 @@ def user_upload_path(instance, filename):
 class FileManager(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     file = models.FileField(upload_to=user_upload_path)
-    require_minify = models.BooleanField(default=False)
+    minify = models.BooleanField(default=False)
     metadata = models.OneToOneField(FileContent, on_delete=models.CASCADE)
     minification_log = models.OneToOneField(MinificationLog, null=True, blank=True, on_delete=models.CASCADE)
 
