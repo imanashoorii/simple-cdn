@@ -1,4 +1,11 @@
+import time
+import traceback
+import os
+from datetime import timedelta
+
 from rest_framework import serializers
+from memory_profiler import profile
+from memory_profiler import memory_usage
 
 from file_manager.constants import ErrorMessages
 from file_manager.minifier.enums import MinifierEnum
@@ -31,6 +38,24 @@ class FileManagerSerializer(serializers.ModelSerializer):
         model = FileManager
         fields = ['id', 'user', 'file', 'metadata', 'minify', 'minification_log']
 
+    @profile(stream=open(os.devnull, 'w'))
+    def __minify_and_measure(self, file_content, file_name, file_type):
+        start_time = time.time()
+        minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
+
+        if file_type == 'html':
+            status, result = minifier_class.minify_html(file_name=file_name, file_content=file_content)
+        elif file_type == 'css':
+            status, result = minifier_class.minify_css(file_name=file_name, file_content=file_content)
+        else:
+            status, result = minifier_class.minify_js(file_name=file_name, file_content=file_content)
+
+        end_time = time.time()
+        mem_usage = max(memory_usage())
+        elapsed_time = end_time - start_time
+
+        return status, result, mem_usage, elapsed_time
+
     def create(self, validated_data):
         uploaded_file = validated_data.pop('file')
         file_content = FileContent.objects.create(
@@ -48,23 +73,24 @@ class FileManagerSerializer(serializers.ModelSerializer):
 
         try:
             file_content_text = uploaded_file.read().decode('utf-8')
-            if minify:
-                minifier_class = MinifierProviderFactory().get(minifier=MinifierEnum.CSS_HTML_JS)
-                if file_content.file_type == 'html':
-                    status, result = minifier_class.minify_html(file_name=uploaded_file.name, file_content=file_content_text)
-                elif file_content.file_type == 'css':
-                    status, result = minifier_class.minify_css(file_name=uploaded_file.name, file_content=file_content_text)
-                else:
-                    status, result = minifier_class.minify_js(file_name=uploaded_file.name, file_content=file_content_text)
-
+            if not minify:
+                validated_data['file'] = uploaded_file
+            else:
+                status, result, mem_usage, elapsed_time = self.__minify_and_measure(file_name=uploaded_file.name,
+                                                                                    file_content=file_content_text,
+                                                                                    file_type=file_content.file_type)
                 if not status:
                     raise serializers.ValidationError({"error": "Minification failed"})
+                try:
+                    minification_log_obj = MinificationLog.objects.create(
+                        memory_usage=mem_usage,
+                        time_taken=elapsed_time
+                    )
+                except Exception as error:
+                    raise serializers.ValidationError({"error": error})
+                validated_data['minification_log'] = minification_log_obj
                 validated_data['file'] = result
-            else:
-                validated_data['file'] = uploaded_file
-
             file_manager = FileManager.objects.create(metadata=file_content, user=user, **validated_data)
             return file_manager
-
-        except Exception as e:
-            raise serializers.ValidationError({"error": e})
+        except Exception as error:
+            raise serializers.ValidationError({"error": error})
