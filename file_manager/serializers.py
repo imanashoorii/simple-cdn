@@ -6,12 +6,13 @@ from datetime import timedelta
 from rest_framework import serializers
 from memory_profiler import profile
 from memory_profiler import memory_usage
-
-from file_manager.constants import ErrorMessages
+from file_manager.constants import ErrorMessages, JSONSchemas
 from file_manager.minifier.enums import MinifierEnum
 from file_manager.minifier.factory import MinifierProviderFactory
-from file_manager.models import FileContent, MinificationLog, FileManager
+from file_manager.models import FileContent, FileManager
+from file_manager.objects import MinificationLog
 from file_manager.utils import acceptableMinificationFileTypes
+from file_manager.validators import JSONSchemaValidator
 
 
 class FileContentSerializer(serializers.ModelSerializer):
@@ -23,16 +24,16 @@ class FileContentSerializer(serializers.ModelSerializer):
         name = self.context.get('file').name
 
 
-class MinificationLogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MinificationLog
-        fields = '__all__'
+# class MinificationLogSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = MinificationLog
+#         fields = '__all__'
 
 
 class FileManagerSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     metadata = FileContentSerializer(read_only=True)
-    minification_log = MinificationLogSerializer(read_only=True)
+    # minification_log = MinificationLogSerializer(read_only=True)
 
     class Meta:
         model = FileManager
@@ -82,15 +83,17 @@ class FileManagerSerializer(serializers.ModelSerializer):
                 if not status:
                     raise serializers.ValidationError({"error": "Minification failed"})
                 try:
-                    minification_log_obj = MinificationLog.objects.create(
+                    minification_log_obj = MinificationLog(
                         memory_usage=mem_usage,
                         time_taken=elapsed_time
                     )
                 except Exception as error:
                     raise serializers.ValidationError({"error": error})
-                validated_data['minification_log'] = minification_log_obj
+                validated_data['minification_log'] = minification_log_obj.to_dict()
                 validated_data['file'] = result
-            file_manager = FileManager.objects.create(metadata=file_content, user=user, **validated_data)
+            file_manager = FileManager(metadata=file_content, user=user, **validated_data)
+            file_manager.clean_fields()
+            file_manager.save()
             return file_manager
         except Exception as error:
             raise serializers.ValidationError({"error": error})
