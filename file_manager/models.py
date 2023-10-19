@@ -1,8 +1,7 @@
 import os
-import sys
 
-from django.contrib.auth import get_user_model
 from django.db import models
+from django.contrib.auth import get_user_model
 
 from file_manager.constants import JSONSchemas
 from file_manager.validators import JSONSchemaValidator
@@ -36,16 +35,16 @@ class FileManager(models.Model):
 
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.file.name
+
     def save(self, *args, **kwargs):
-        try:
-            file_name = user_upload_path(self, self.file.name)
-            if sys.platform == 'win32':
-                file_name = file_name.replace("\\", "/")
-
-            existing_instance = FileManager.objects.filter(file=file_name).first()
-            if existing_instance:
-                existing_instance.file.delete(save=False)
-        except FileManager.DoesNotExist:
-            pass
-
-        super(FileManager, self).save(*args, **kwargs)
+        existing_files = FileManager.objects.filter(
+            user=self.user,
+            file__iexact=f'uploads/{self.user}/{self.file.name}'
+        )
+        if existing_files:
+            for existing_file in existing_files:
+                existing_file.file.delete()
+                existing_file.delete()
+        super().save(*args, **kwargs)
