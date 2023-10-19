@@ -4,3 +4,7 @@ class WrongMinifierProviderException(Exception):
 
 class WrongMimeTypeException(Exception):
     pass
+
+
+class JSONSchemaException(Exception):
+    pass

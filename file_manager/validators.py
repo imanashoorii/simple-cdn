@@ -1,7 +1,8 @@
 from django.core.validators import BaseValidator
-from rest_framework import serializers
 import jsonschema
 from jsonschema.exceptions import ValidationError as JSONValidationError
+
+from core.exceptions import JSONSchemaException
 
 
 class JSONSchemaValidator(BaseValidator):
@@ -12,5 +13,5 @@ class JSONSchemaValidator(BaseValidator):
     def __call__(self, value):
         try:
             jsonschema.validate(value, self.limit_value)
-        except JSONValidationError as e:
-            raise serializers.ValidationError('Invalid schema')
+        except JSONValidationError:
+            raise JSONSchemaException('Invalid Schema')
