@@ -18,7 +18,7 @@ class FileManagerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FileManager
-        fields = ['id', 'user', 'file', 'metadata', 'minify', 'minification_log']
+        fields = ['id', 'user', 'file', 'metadata', 'minify', 'minification_log', 'uploaded_at']
 
     @profile(stream=open(os.devnull, 'w'))
     def __minify_and_measure(self, file_content, file_name, file_type):
