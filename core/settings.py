@@ -43,7 +43,6 @@ DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -56,13 +55,19 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'accounts',
-    'file_manager'
+    'file_manager',
+    'logger',
+
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+
+    # CUSTOM GRAYLOG LOGING MIDDLEWARE
+    'logger.middleware.GraylogExceptionMiddleware',
+
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -88,7 +93,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -122,7 +126,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -134,14 +137,12 @@ USE_I18N = True
 
 USE_TZ = False
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -160,4 +161,29 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(env('ACCESS_TOKEN_LIFETIME'))),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=int(env('REFRESH_TOKEN_LIFETIME'))),
     'UPDATE_LAST_LOGIN': True,
+}
+
+# GRAYLOG LOGGING CONFIGS
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'graypy': {
+            'class': 'graypy.GELFTCPHandler',
+            'host': env('GRAYLOG_HOSTNAME'),
+            'port': int(env('GRAYLOG_GELF_PORT')),
+        },
+    },
+    'loggers': {
+        'request_errors': {
+            'handlers': ['graypy'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'warnings': {
+            'handlers': ['graypy'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+    },
 }
