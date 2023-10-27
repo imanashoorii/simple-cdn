@@ -57,33 +57,29 @@ class FileManagerSerializer(serializers.ModelSerializer):
         if minify and metadata.file_type not in acceptable_files:
             raise serializers.ValidationError({"error": ErrorMessages.FILE_NOT_ALLOWED})
 
-        try:
-            file_content_text = uploaded_file.read().decode('utf-8')
-            if not minify:
-                validated_data['file'] = uploaded_file
-            else:
-                status, result, mem_usage, elapsed_time = self.__minify_and_measure(file_name=uploaded_file.name,
-                                                                                    file_content=file_content_text,
-                                                                                    file_type=metadata.to_dict().get('file_type'))
-                if not status:
-                    raise serializers.ValidationError({"error": ErrorMessages.MINIFICATION_FAILED})
+        file_content_text = uploaded_file.read().decode('utf-8')
+        if not minify:
+            validated_data['file'] = uploaded_file
+        else:
+            status, result, mem_usage, elapsed_time = self.__minify_and_measure(file_name=uploaded_file.name,
+                                                                                file_content=file_content_text,
+                                                                                file_type=metadata.to_dict().get('file_type'))
+            if not status:
+                raise serializers.ValidationError({"error": ErrorMessages.MINIFICATION_FAILED})
 
-                try:
-                    minification_log_obj = MinificationLog(
-                        memory_usage=mem_usage,
-                        time_taken=elapsed_time
-                    )
-                except Exception:
-                    raise serializers.ValidationError({"error": ErrorMessages.MINIFICATION_LOG_CREATION_FAILED})
+            try:
+                minification_log_obj = MinificationLog(
+                    memory_usage=mem_usage,
+                    time_taken=elapsed_time
+                )
+            except Exception:
+                raise serializers.ValidationError({"error": ErrorMessages.MINIFICATION_LOG_CREATION_FAILED})
 
-                validated_data['minification_log'] = minification_log_obj.to_dict()
-                validated_data['file'] = result
+            validated_data['minification_log'] = minification_log_obj.to_dict()
+            validated_data['file'] = result
 
-            file_manager = FileManager(metadata=metadata.to_dict(), user=user, **validated_data)
-            file_manager.clean_fields()
-            file_manager.save()
+        file_manager = FileManager(metadata=metadata.to_dict(), user=user, **validated_data)
+        file_manager.clean_fields()
+        file_manager.save()
 
-            return file_manager
-
-        except Exception as error:
-            raise serializers.ValidationError({"error": error})
+        return file_manager
