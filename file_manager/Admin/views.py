@@ -11,4 +11,4 @@ class GetUserUploadedFilesAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         user_id = self.kwargs.get('user_id')
-        return FileManager.objects.filter(user_id=user_id).order_by('-uploaded_at')
+        return FileManager.objects.select_related('user').filter(user_id=user_id).order_by('-uploaded_at')
