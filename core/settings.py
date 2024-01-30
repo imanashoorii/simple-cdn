@@ -10,23 +10,24 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-import environ
 import os
 from pathlib import Path
 from datetime import timedelta
+
+import mongoengine
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ENV
-
 env = environ.Env(
     DEBUG=(bool, False),
-    DB_NAME=(str, "postgres"),
-    DB_HOST=(str, "localhost"),
-    DB_PORT=(str, "5432"),
-    DB_USER=(str, "postgres"),
-    DB_PASSWORD=(str, "postgres"),
+    USER_DB_NAME=(str, "postgres"),
+    USER_DB_HOST=(str, "localhost"),
+    USER_DB_PORT=(str, "5432"),
+    USER_DB_USER=(str, "postgres"),
+    USER_DB_PASSWORD=(str, "postgres"),
 )
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
@@ -100,13 +101,29 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME'),
-        'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
-        'USER': env('DB_USER'),
-        'PASSWORD': env('DB_PASSWORD')
+        'NAME': env('USERS_DB_NAME'),
+        'HOST': env('USERS_DB_HOST'),
+        'PORT': env('USERS_DB_PORT'),
+        'USER': env('USERS_DB_USER'),
+        'PASSWORD': env('USERS_DB_PASSWORD')
     }
 }
+
+# MONGODB CONNECTION
+
+_MONGODB_NAME = env("MONGO_DB_NAME")
+_MONGODB_DATABASE_HOST = env("MONGO_DB_HOST")
+_MONGODB_DATABASE_USER = env("MONGO_ROOT_USER")
+_MONGODB_DATABASE_PASS = env("MONGO_ROOT_PASS")
+
+mongoengine.connect(
+    _MONGODB_NAME,
+    host=_MONGODB_DATABASE_HOST,
+    username=_MONGODB_DATABASE_USER,
+    password=_MONGODB_DATABASE_PASS,
+    authentication_source='admin',
+    connect=False
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -158,7 +175,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(env('ACCESS_TOKEN_LIFETIME'))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(env('ACCESS_TOKEN_LIFETIME'))),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=int(env('REFRESH_TOKEN_LIFETIME'))),
     'UPDATE_LAST_LOGIN': True,
 }

@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+#  nginx:
+#    build:
+#      context: ./nginx
+#      dockerfile: Dockerfile
+#    container_name: nginx
+#    hostname: nginx
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - web
+#    volumes:
+#      - nginx_conf:/etc/nginx/conf.d/
+#      - static_volume:/usr/src/app/static
+#    networks:
+#      - cdn
+#    restart: always
+#  web:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: backend
+#    hostname: backend
+#    environment:
+#      - DEBUG=False
+#      - ALLOWED_HOSTS=*
+#    expose:
+#      - 8000
+#    networks:
+#      - cdn
+#    volumes:
+#      - static_volume:/usr/src/app/static
+#    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
+#    restart: always
+  postgress:
+    image: postgres:15-alpine
+    container_name: postgres
+    hostname: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    ports:
+      - '5432:5432'
+    volumes:
+      - cdn_postgres_data:/var/lib/postgresql/data
+    networks:
+      - cdn
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    hostname: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    volumes:
+      - mongodb_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - cdn
+
+volumes:
+  nginx_conf:
+    name: nginx_conf
+  static_volume:
+    name: static_volume
+  cdn_postgres_data:
+    name: cdn_postgres_data
+  mongodb_data:
+    name: mongodb_data
+  mongo_config:
+    name: mongo_config
+
+networks:
+  cdn:
+    name: cdn

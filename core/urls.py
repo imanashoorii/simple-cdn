@@ -20,9 +20,11 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('sFZoNPbr2itv5PXC/', admin.site.urls),
+
     path('accounts/', include('accounts.urls')),
-    path('file/', include('file_manager.urls'))
+    path('file/', include('file_manager.urls')),
+    path('cdn/', include('cdn.urls'))
 ]
 
 if settings.DEBUG:
