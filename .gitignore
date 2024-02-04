@@ -144,3 +144,4 @@ GitHub.sublime-settings
 
 */migrations
 test_files/
+.vscode
