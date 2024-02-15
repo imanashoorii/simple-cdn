@@ -16,11 +16,13 @@ from datetime import timedelta
 
 import mongoengine
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ENV
+### ENV CONFIGURATIONS ###
 env = environ.Env(
     DEBUG=(bool, False),
     USER_DB_NAME=(str, "postgres"),
@@ -65,10 +67,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-
-    # CUSTOM GRAYLOG LOGING MIDDLEWARE
-    'logger.middleware.GraylogExceptionMiddleware',
-
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -95,9 +93,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
+### DATABASE CONFIGURATIONS ###
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -109,8 +105,7 @@ DATABASES = {
     }
 }
 
-# MONGODB CONNECTION
-
+### MONGODB CONFIGURATIONS ###
 _MONGODB_NAME = env("MONGO_DB_NAME")
 _MONGODB_DATABASE_HOST = env("MONGO_DB_HOST")
 _MONGODB_DATABASE_USER = env("MONGO_ROOT_USER")
@@ -166,41 +161,23 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# JWT Configs
-
+### DRF CONFIGURATIONS ###
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
 
+### JWT CONFIGURATIONS ###
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=int(env('ACCESS_TOKEN_LIFETIME'))),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=int(env('REFRESH_TOKEN_LIFETIME'))),
     'UPDATE_LAST_LOGIN': True,
 }
 
-# GRAYLOG LOGGING CONFIGS
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'graypy': {
-            'class': 'graypy.GELFTCPHandler',
-            'host': env('GRAYLOG_HOSTNAME'),
-            'port': int(env('GRAYLOG_GELF_PORT')),
-        },
-    },
-    'loggers': {
-        'request_errors': {
-            'handlers': ['graypy'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'warnings': {
-            'handlers': ['graypy'],
-            'level': 'WARNING',
-            'propagate': True,
-        },
-    },
-}
+### SENTRY CONFIGURATIONS ###
+sentry_sdk.init(
+    dsn=env('SENTRY_DSN'),
+    integrations=[DjangoIntegration()],
+    traces_sample_rate=1.0,
+)
