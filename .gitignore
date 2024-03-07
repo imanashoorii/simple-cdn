@@ -142,6 +142,5 @@ GitHub.sublime-settings
 !.vscode/extensions.json 
 .history
 
-*/migrations
 test_files/
 .vscode
