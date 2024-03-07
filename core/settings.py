@@ -14,7 +14,6 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-import mongoengine
 import environ
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -104,21 +103,6 @@ DATABASES = {
         'PASSWORD': env('USERS_DB_PASSWORD')
     }
 }
-
-### MONGODB CONFIGURATIONS ###
-_MONGODB_NAME = env("MONGO_DB_NAME")
-_MONGODB_DATABASE_HOST = env("MONGO_DB_HOST")
-_MONGODB_DATABASE_USER = env("MONGO_ROOT_USER")
-_MONGODB_DATABASE_PASS = env("MONGO_ROOT_PASS")
-
-mongoengine.connect(
-    _MONGODB_NAME,
-    host=_MONGODB_DATABASE_HOST,
-    username=_MONGODB_DATABASE_USER,
-    password=_MONGODB_DATABASE_PASS,
-    authentication_source='admin',
-    connect=False
-)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

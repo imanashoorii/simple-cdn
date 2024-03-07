@@ -2,9 +2,7 @@ Django==5.0.2
 django-environ==0.11.2
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.0
-django-rest-framework-mongoengine==3.4.1
-mongoengine==0.27.0
-mongoengine-goodjson==1.1.8
+css_html_js_minify==2.5.5
 flake8==6.1.0
 psycopg2-binary==2.9.8
 jsonschema==4.19.1
